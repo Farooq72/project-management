@@ -1,28 +1,61 @@
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 import NewProject from './components/NewProject.jsx';
 import NoProjectSelected from './components/NoProjectSelected.jsx';
 import ProjectsSidebar from './components/ProjectsSidebar.jsx';
 import SelectedProject from './components/SelectedProject.jsx';
+import ApiKeyModal from './components/ApiKeyModal.jsx';
+import { setGrokApiKey, hasGrokApiKey } from './services/grokService.js';
 
 function App() {
+  const apiKeyModal = useRef();
   const [projectsState, setProjectsState] = useState({
     selectedProjectId: undefined,
     projects: [],
-    tasks: []
+    tasks: [],
+    hasApiKey: hasGrokApiKey()
   });
 
-  function handleAddTask(text) {
+  function handleAddTask(text, priority = 'medium') {
     setProjectsState(prevState => {
       const taskId = Math.random();
       const newTask = {
         text: text,
         projectId: prevState.selectedProjectId,
-        id: taskId
+        id: taskId,
+        priority: priority,
+        completed: false
       };
       return {
         ...prevState,
         tasks: [newTask, ...prevState.tasks]
+      };
+    });
+  }
+
+  function handleUpdateTask(taskId, updates) {
+    setProjectsState(prevState => {
+      return {
+        ...prevState,
+        tasks: prevState.tasks.map(task =>
+          task.id === taskId ? { ...task, ...updates } : task
+        )
+      };
+    });
+  }
+
+  function handleAddMultipleTasks(tasksArray) {
+    setProjectsState(prevState => {
+      const newTasks = tasksArray.map(task => ({
+        text: task.text,
+        priority: task.priority || 'medium',
+        projectId: prevState.selectedProjectId,
+        id: Math.random(),
+        completed: false
+      }));
+      return {
+        ...prevState,
+        tasks: [...newTasks, ...prevState.tasks]
       };
     });
   }
@@ -68,7 +101,8 @@ function App() {
       const projectId = Math.random();
       const newProject = {
         ...projectData,
-        id: projectId
+        id: projectId,
+        riskAnalysis: null
       };
       return {
         ...prevState,
@@ -76,6 +110,29 @@ function App() {
         projects: [...prevState.projects, newProject]
       };
     });
+  }
+
+  function handleUpdateProject(projectId, updates) {
+    setProjectsState(prevState => {
+      return {
+        ...prevState,
+        projects: prevState.projects.map(project =>
+          project.id === projectId ? { ...project, ...updates } : project
+        )
+      };
+    });
+  }
+
+  function handleSaveApiKey(key) {
+    setGrokApiKey(key);
+    setProjectsState(prevState => ({
+      ...prevState,
+      hasApiKey: true
+    }));
+  }
+
+  function handleOpenApiKeyModal() {
+    apiKeyModal.current.open();
   }
 
   function handleDeleteProject() {
@@ -104,28 +161,43 @@ function App() {
       onDelete={handleDeleteProject}
       onAddTask={handleAddTask}
       onDeleteTask={handleDeleteTask}
+      onUpdateTask={handleUpdateTask}
+      onUpdateProject={handleUpdateProject}
+      onAddMultipleTasks={handleAddMultipleTasks}
       tasks={selectedTask}
+      hasApiKey={projectsState.hasApiKey}
+      onOpenApiKeyModal={handleOpenApiKeyModal}
     />
   );
 
   if (projectsState.selectedProjectId === null) {
     content = (
-      <NewProject onAdd={handleAddProject} onCancel={handleCancelAddProject} />
+      <NewProject 
+        onAdd={handleAddProject} 
+        onCancel={handleCancelAddProject}
+        hasApiKey={projectsState.hasApiKey}
+        onOpenApiKeyModal={handleOpenApiKeyModal}
+      />
     );
   } else if (projectsState.selectedProjectId === undefined) {
     content = <NoProjectSelected onStartAddProject={handleStartAddProject} />;
   }
 
   return (
-    <main className="h-screen my-8 flex gap-8">
-      <ProjectsSidebar
-        onStartAddProject={handleStartAddProject}
-        projects={projectsState.projects}
-        onSelectProject={handleSelectProject}
-        selectedProjectId={projectsState.selectedProjectId}
-      />
-      {content}
-    </main>
+    <>
+      <ApiKeyModal ref={apiKeyModal} onSave={handleSaveApiKey} />
+      <main className="h-screen my-8 flex gap-8">
+        <ProjectsSidebar
+          onStartAddProject={handleStartAddProject}
+          projects={projectsState.projects}
+          onSelectProject={handleSelectProject}
+          selectedProjectId={projectsState.selectedProjectId}
+          hasApiKey={projectsState.hasApiKey}
+          onOpenApiKeyModal={handleOpenApiKeyModal}
+        />
+        {content}
+      </main>
+    </>
   );
 }
 

@@ -1,9 +1,12 @@
 import noProjectImage from '../assets/no-projects.png';
 import Button from './Button.jsx';
+import AiFeaturesBanner from './AiFeaturesBanner.jsx';
 
 export default function NoProjectSelected({ onStartAddProject }) {
   return (
     <div className="mt-24 text-center w-2/3">
+      <AiFeaturesBanner />
+      
       <img
         src={noProjectImage}
         alt="An empty task list"
