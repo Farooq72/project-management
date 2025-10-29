@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # AI-Powered Project Management Application 🚀
 
 ## Overview
@@ -283,3 +284,6 @@ Try building this project on your own - or at least try to get as far as possibl
 ## 16. Fixing More Bugs
 
 1. make tasks unique for each project
+=======
+
+>>>>>>> eb6ea50439ee50bc9f11d4ba84e853501eb2b98b
